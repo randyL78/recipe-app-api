@@ -2,16 +2,17 @@ FROM python:3.9-alpine3.13
 
 LABEL maintainer="randyL78"
 
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONUNBUFFERED=1
 
 COPY ./requirements.txt /tmp/requirements.txt
 COPY ./requirements.dev.txt /tmp/requirements.dev.txt
+COPY ./scripts /scripts
 
 ARG DEV=false
 
 RUN apk add --update --no-cache postgresql-client jpeg-dev && \
     apk add --update --no-cache --virtual .tmp-build-deps \
-    build-base postgresql-dev musl-dev zlib zlib-dev
+    build-base postgresql-dev musl-dev zlib zlib-dev linux-headers
 
 WORKDIR /app
 
@@ -31,12 +32,15 @@ RUN python -m venv /py && \
 RUN mkdir -p /vol/web/media && \
     mkdir -p /vol/web/static && \
     chown -R django-user:django-user /vol && \
-    chmod -R 755 /vol
+    chmod -R 755 /vol && \
+    chmod -R +x /scripts
 
 COPY ./app .
 
 EXPOSE 8000
 
-ENV PATH="/py/bin:$PATH"
+ENV PATH="/scripts:/py/bin:$PATH"
 
 USER django-user
+
+CMD ["run.sh"]
